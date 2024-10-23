@@ -1,0 +1,1 @@
+module.exports = require('./functions/generate-cover-letter.js')

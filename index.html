@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cover Letter Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f0f9ff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .upload-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .upload-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .upload-box h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-wrapper label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-input-wrapper label:hover {
+            border-color: var(--primary-color);
+            background-color: #f8fafc;
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .generate-button {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .generate-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .generate-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .output-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .output-container.visible {
+            display: block;
+        }
+
+        .output-content {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .download-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Cover Letter Generator</h1>
+            <p>Upload your documents and let AI create a personalized cover letter</p>
+        </div>
+
+        <div class="upload-container">
+            <div class="upload-box">
+                <h3><i class="fas fa-file-alt"></i> Resume</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="resume" accept=".pdf,.docx">
+                    <label for="resume">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Choose Resume
+                    </label>
+                    <div id="resume-name" class="file-name"></div>
+                </div>
+            </div>
+
+            <div class="upload-box">
+                <h3><i class="fas fa-envelope"></i> Cover Letter Template</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="coverLetter" accept=".pdf,.docx">
+                    <label for="coverLetter">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Choose Template
+                    </label>
+                    <div id="coverLetter-name" class="file-name"></div>
+                </div>
+            </div>
+
+            <div class="upload-box">
+                <h3><i class="fas fa-briefcase"></i> Job Description</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="jobDescription" accept=".pdf,.docx">
+                    <label for="jobDescription">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Choose Description
+                    </label>
+                    <div id="jobDescription-name" class="file-name"></div>
+                </div>
+            </div>
+        </div>
+
+        <button id="generateButton" class="generate-button" onclick="generateCoverLetter()">
+            Generate Cover Letter
+        </button>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Generating your cover letter...</p>
+        </div>
+
+        <div id="output" class="output-container">
+            <h3>Generated Cover Letter</h3>
+            <div id="output-content" class="output-content"></div>
+            <button class="download-button" onclick="downloadCoverLetter()">
+                <i class="fas fa-download"></i> Download
+            </button>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // File input handlers
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const nameDiv = document.getElementById(`${this.id}-name`);
+                nameDiv.textContent = this.files[0] ? this.files[0].name : '';
+                updateGenerateButton();
+            });
+        });
+
+        function updateGenerateButton() {
+            const resume = document.getElementById('resume').files[0];
+            const coverLetter = document.getElementById('coverLetter').files[0];
+            const jobDescription = document.getElementById('jobDescription').files[0];
+            const generateButton = document.getElementById('generateButton');
+
+            generateButton.disabled = !(resume && coverLetter && jobDescription);
+        }
+
+        async function readFile(file) {
+            if (file.name.endsWith('.pdf')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(item => item.str).join(' ') + '\n';
+                }
+                return text;
+            } else if (file.name.endsWith('.docx')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                return result.value;
+            }
+            throw new Error('Unsupported file format');
+        }
+
+        async function generateCoverLetter() {
+            const resume = document.getElementById('resume').files[0];
+            const coverLetter = document.getElementById('coverLetter').files[0];
+            const jobDescription = document.getElementById('jobDescription').files[0];
+            const loading = document.getElementById('loading');
+            const output = document.getElementById('output');
+            const outputContent = document.getElementById('output-content');
+
+            if (!resume || !coverLetter || !jobDescription) {
+                showError('Please upload all required files.');
+                return;
+            }
+
+            try {
+                loading.style.display = 'block';
+                output.classList.remove('visible');
+
+                const resumeText = await readFile(resume);
+                const coverLetterText = await readFile(coverLetter);
+                const jobDescriptionText = await readFile(jobDescription);
+
+                // Call the serverless function 
+                const response = await fetch('/.netlify/functions/generate-cover-letter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        resume: resumeText,
+                        coverLetter: coverLetterText,
+                        jobDescription: jobDescriptionText
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    try {
+                        const parsedError = JSON.parse(errorData);
+                        throw new Error(parsedError.error || 'Failed to generate cover letter');
+                    } catch (e) {
+                        throw new Error(`Server error: ${errorData}`);
+                    }
+                }
+
+                const data = await response.json();
+                outputContent.textContent = data.coverLetter;
+                output.classList.add('visible');
+            } catch (error) {
+                showError(error.message);
+                console.error('Error details:', error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const output = document.getElementById('output');
+            const outputContent = document.getElementById('output-content');
+            outputContent.innerHTML = `<div class="error">${message}</div>`;
+            output.classList.add('visible');
+        }
+
+        function downloadCoverLetter() {
+            const content = document.getElementById('output-content').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cover-letter.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
