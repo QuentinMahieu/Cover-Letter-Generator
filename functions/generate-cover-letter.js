@@ -82,7 +82,7 @@ exports.handler = async function(event, context) {
             Instructions:
             1. Maintain the professional tone and basic structure of the template
             2. Incorporate relevant keywords and phrases from the job description naturally
-            3. Highlight specific experiences from the resume that directly match the job requirements
+            3. Highlight specific experiences from the resume and cover letter that directly match the job requirements
             4. Demonstrate understanding of the company's needs and how the candidate's skills address them
             5. Keep the letter concise and focused (around 300-400 words)
             6. Maintain any personal style elements from the original cover letter
@@ -110,7 +110,7 @@ exports.handler = async function(event, context) {
                     content: prompt
                 }
             ],
-            temperature: 0.7,
+            temperature: 0.2,
             max_tokens: 1500,
             presence_penalty: 0.1,
             frequency_penalty: 0.1,
