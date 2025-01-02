@@ -115,7 +115,8 @@ exports.handler = async function(event, context) {
             presence_penalty: 0.1,
             frequency_penalty: 0.1,
         });
-        console.log(completion);
+
+        console.log('OpenAI response:', completion);
         const generatedCoverLetter = completion.choices[0].message.content.trim();
 
         // Post-processing to ensure proper formatting
@@ -167,7 +168,7 @@ exports.handler = async function(event, context) {
                 headers,
                 body: JSON.stringify({
                     error: 'Internal server error',
-                    message: 'An unexpected error occurred'
+                    message: error.message || 'An unexpected error occurred'
                 })
             };
         }
